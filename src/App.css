@@ -1,0 +1,151 @@
+/* Estilo general */
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: #111827;
+  color: #fff;
+}
+
+/* Dashboard */
+.dashboard {
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.dashboard-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.dashboard-header h1 {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+/* Formulario */
+.crypto-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.crypto-form input {
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: none;
+  flex: 1;
+}
+
+/* Botones */
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.btn-success {
+  background: #22c55e;
+  color: #fff;
+}
+.btn-success:hover {
+  background: #16a34a;
+}
+
+.btn-warning {
+  background: #facc15;
+  color: #000;
+}
+.btn-warning:hover {
+  background: #eab308;
+}
+
+.btn-secondary {
+  background: #6b7280;
+  color: #fff;
+}
+.btn-secondary:hover {
+  background: #4b5563;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: #fff;
+}
+.btn-danger:hover {
+  background: #dc2626;
+}
+
+.btn-info {
+  background: #3b82f6;
+  color: #fff;
+}
+.btn-info:hover {
+  background: #2563eb;
+}
+
+.btn-primary {
+  background: #a855f7;
+  color: #fff;
+}
+.btn-primary:hover {
+  background: #9333ea;
+}
+
+/* Grid de cards */
+.crypto-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.crypto-card {
+  background: #1f2937;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  transition: 0.2s;
+}
+
+.crypto-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+
+.crypto-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.crypto-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.crypto-card h2 {
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.crypto-price {
+  font-size: 0.9rem;
+  margin: 0.5rem 0;
+  color: #d1d5db;
+}
+
+/* Responsive */
+@media (min-width: 768px) {
+  .crypto-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .crypto-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
