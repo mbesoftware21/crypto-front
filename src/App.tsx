@@ -1,11 +1,9 @@
-import Home from "./pages/Home";
+import Dashboard from "./components/Dashboard";
 
-function App() {
+export default function App() {
   return (
-    <div>
-      <Home />
+    <div className="app">
+      <Dashboard />
     </div>
   );
 }
-
-export default App;

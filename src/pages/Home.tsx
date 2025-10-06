@@ -26,11 +26,23 @@ interface SyncedData {
   }[];
 }
 
+interface Order {
+  type: "buy" | "sell";
+  symbol: string;
+  amount: number;
+  price: number;
+  total: number;
+  date: string;
+}
+
 export default function Home() {
   const [cryptos, setCryptos] = useState<Crypto[]>([]);
   const [form, setForm] = useState({ symbol: "", name: "" });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [syncedData, setSyncedData] = useState<SyncedData>({});
+  const [balance, setBalance] = useState(10000); // saldo ficticio en USD
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [trade, setTrade] = useState<{ [symbol: string]: { amount: number; type: "buy" | "sell" } }>({});
 
   useEffect(() => {
     loadCryptos();
@@ -89,10 +101,47 @@ export default function Home() {
     }
   };
 
+  const handleTrade = (symbol: string) => {
+    const last = syncedData[symbol]?.at(-1);
+    if (!last) {
+      alert("Primero sincroniza los datos de la moneda");
+      return;
+    }
+
+    const { amount, type } = trade[symbol] || { amount: 0, type: "buy" };
+    const total = amount * last.price;
+
+    if (amount <= 0) {
+      alert("Cantidad inválida");
+      return;
+    }
+
+    if (type === "buy" && total > balance) {
+      alert("Fondos insuficientes");
+      return;
+    }
+
+    setBalance((prev) => (type === "buy" ? prev - total : prev + total));
+
+    setOrders((prev) => [
+      {
+        type,
+        symbol,
+        amount,
+        price: last.price,
+        total,
+        date: new Date().toLocaleString(),
+      },
+      ...prev,
+    ]);
+
+    setTrade((prev) => ({ ...prev, [symbol]: { ...prev[symbol], amount: 0 } }));
+  };
+
   return (
     <div className="dashboard">
       <header className="dashboard-header">
-        <h1>Crypto Dashboard</h1>
+        <h1>Crypto Exchange</h1>
         <form onSubmit={handleCreate} className="crypto-form">
           <input
             placeholder="Símbolo (ej: BTC)"
@@ -106,7 +155,11 @@ export default function Home() {
           />
           {editingId ? (
             <>
-              <button type="button" onClick={() => handleUpdate(editingId)} className="btn btn-warning">
+              <button
+                type="button"
+                onClick={() => handleUpdate(editingId)}
+                className="btn btn-warning"
+              >
                 Actualizar
               </button>
               <button
@@ -126,6 +179,10 @@ export default function Home() {
             </button>
           )}
         </form>
+        <div style={{ marginTop: "1rem", fontWeight: "600" }}>
+          💰 Saldo disponible:{" "}
+          <span style={{ color: "#22c55e" }}>${balance.toFixed(2)}</span>
+        </div>
       </header>
 
       <div className="crypto-grid">
@@ -136,9 +193,15 @@ export default function Home() {
                 {c.symbol} - {c.name}
               </h2>
               <div className="crypto-actions">
-                <button onClick={() => handleEditClick(c)} className="btn btn-info">Editar</button>
-                <button onClick={() => handleDelete(c.id)} className="btn btn-danger">Eliminar</button>
-                <button onClick={() => handleSync(c.symbol)} className="btn btn-primary">Sync</button>
+                <button onClick={() => handleEditClick(c)} className="btn btn-info">
+                  Editar
+                </button>
+                <button onClick={() => handleDelete(c.id)} className="btn btn-danger">
+                  Eliminar
+                </button>
+                <button onClick={() => handleSync(c.symbol)} className="btn btn-primary">
+                  Sync
+                </button>
               </div>
             </div>
 
@@ -156,14 +219,104 @@ export default function Home() {
                     <XAxis dataKey="createdAt" hide />
                     <YAxis domain={["auto", "auto"]} stroke="#8884d8" tick={{ fill: "#aaa" }} />
                     <Tooltip contentStyle={{ backgroundColor: "#222", borderRadius: 8 }} />
-                    <Line type="monotone" dataKey="price" stroke="#82ca9d" dot={false} strokeWidth={2} />
+                    <Line type="monotone" dataKey="price" stroke="#22c55e" dot={false} strokeWidth={2} />
                   </LineChart>
                 </ResponsiveContainer>
+
+                {/* 💱 Panel de trading */}
+                <div style={{ marginTop: "1rem" }}>
+                  <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                    <select
+                      value={trade[c.symbol]?.type || "buy"}
+                      onChange={(e) =>
+                        setTrade((prev) => ({
+                          ...prev,
+                          [c.symbol]: {
+                            ...prev[c.symbol],
+                            type: e.target.value as "buy" | "sell",
+                          },
+                        }))
+                      }
+                      style={{
+                        background: "#161b22",
+                        color: "#e6edf3",
+                        borderRadius: "6px",
+                        padding: "0.4rem",
+                        border: "1px solid #30363d",
+                      }}
+                    >
+                      <option value="buy">Comprar</option>
+                      <option value="sell">Vender</option>
+                    </select>
+
+                    <input
+                      type="number"
+                      placeholder="Cantidad"
+                      value={trade[c.symbol]?.amount || ""}
+                      onChange={(e) =>
+                        setTrade((prev) => ({
+                          ...prev,
+                          [c.symbol]: {
+                            ...prev[c.symbol],
+                            amount: Number(e.target.value),
+                          },
+                        }))
+                      }
+                      style={{
+                        background: "#161b22",
+                        color: "#e6edf3",
+                        borderRadius: "6px",
+                        padding: "0.4rem",
+                        border: "1px solid #30363d",
+                        flex: 1,
+                      }}
+                    />
+
+                    <button
+                      onClick={() => handleTrade(c.symbol)}
+                      className={`btn ${
+                        trade[c.symbol]?.type === "buy" ? "btn-success" : "btn-danger"
+                      }`}
+                      style={{ flexShrink: 0 }}
+                    >
+                      {trade[c.symbol]?.type === "buy" ? "Comprar" : "Vender"}
+                    </button>
+                  </div>
+                </div>
               </>
             )}
           </div>
         ))}
       </div>
+
+      {/* 📜 Historial de órdenes */}
+      {orders.length > 0 && (
+        <div style={{ marginTop: "2rem" }}>
+          <h2 style={{ color: "#9333ea" }}>Historial de Órdenes</h2>
+          <ul style={{ listStyle: "none", padding: 0, marginTop: "1rem" }}>
+            {orders.map((o, i) => (
+              <li
+                key={i}
+                style={{
+                  padding: "0.75rem 1rem",
+                  marginBottom: "0.6rem",
+                  background: "#161b22",
+                  borderRadius: "10px",
+                  borderLeft: `5px solid ${
+                    o.type === "buy" ? "#22c55e" : "#ef4444"
+                  }`,
+                }}
+              >
+                <strong>
+                  {o.type === "buy" ? "🟢 Compra" : "🔴 Venta"} {o.amount} {o.symbol}
+                </strong>{" "}
+                a ${o.price.toFixed(2)} = ${o.total.toFixed(2)}
+                <div style={{ fontSize: "0.8rem", color: "#9ca3af" }}>{o.date}</div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
